@@ -14,6 +14,9 @@ type (
 		Expires    *time.Time     `json:"expires,omitempty"`
 		Valid      bool           `json:"valid"`
 		Attributes map[string]int `json:"attributes"`
+		Contact    string         `json:"contact"`
+		Entity     string         `json:"entity"`
+		Issued     time.Time      `json:"issued"`
 	}
 )
 

@@ -43,6 +43,10 @@ func printPermit(cmd *cobra.Command, p permit.Permit) {
 	cmd.Printf("Version: %d\n", p.Version)
 	cmd.Printf("Key:     %s\n", p.Key)
 	cmd.Printf("Domain:  %s\n", p.Domain)
+	cmd.Printf("Contact: %s\n", p.Contact)
+	cmd.Printf("Entity:  %s\n", p.Entity)
+	cmd.Println("---------------------------------------------")
+	cmd.Printf("Issued:  %s\n", p.Issued)
 	cmd.Printf("Valid:   %v\n", p.Valid)
 	cmd.Printf("Expires: %s\n", p.Expires)
 	if len(p.Attributes) > 0 {
@@ -96,7 +100,7 @@ func commands(storage keeper) []*cobra.Command {
 		Use:  "create [permit domain]",
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			var now = time.Now()
+			var now = time.Now().Truncate(time.Second)
 			var exp = &now
 
 			if trial, _ := cmd.Flags().GetBool("trial"); trial {
@@ -119,6 +123,7 @@ func commands(storage keeper) []*cobra.Command {
 			p := permit.Permit{
 				Version: 1,
 				Expires: exp,
+				Issued:  time.Now().Truncate(time.Second),
 				Key:     key,
 				Domain:  args[0],
 				Valid:   true,
@@ -142,6 +147,9 @@ func commands(storage keeper) []*cobra.Command {
 				},
 			}
 
+			p.Contact, _ = cmd.Flags().GetString("contact")
+			p.Entity, _ = cmd.Flags().GetString("entity")
+
 			must(cmd, storage.Create(p))
 
 			printPermit(cmd, p)
@@ -151,6 +159,8 @@ func commands(storage keeper) []*cobra.Command {
 	createCmd.Flags().Bool("infinite", false, "No expiration")
 	createCmd.Flags().Bool("trial", false, "Trial permit")
 	createCmd.Flags().String("force-key", "", "use this key instead of generated string")
+	createCmd.Flags().String("contact", "", "Contact (email)")
+	createCmd.Flags().String("entity", "", "Entity (company, organisation) name, info")
 
 	revokeCmd := &cobra.Command{
 		Use:   "revoke [permit key]",
