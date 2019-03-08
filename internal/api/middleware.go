@@ -86,7 +86,7 @@ func requestLogMiddleware(logger *zap.Logger) gin.HandlerFunc {
 				With(zap.String("redirectionUrl", c.GetHeader("Location"))).
 				Info(pfix + http.StatusText(status))
 
-		} else {
+		} else if gin.Mode() == gin.DebugMode {
 			requestLog.
 				Debug(pfix + http.StatusText(status))
 		}

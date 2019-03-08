@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"regexp"
 	"strconv"
 	"time"
 
@@ -29,8 +28,6 @@ type (
 		Delete(key string) error
 	}
 )
-
-var domainCheck = regexp.MustCompile(`^([a-zA-Z0-9-_]+\.)*[a-zA-Z0-9][a-zA-Z0-9-_]+\.[a-zA-Z]{2,11}?$`)
 
 func must(cmd *cobra.Command, err error) {
 	if err != nil {
@@ -116,35 +113,18 @@ func commands(storage keeper) []*cobra.Command {
 				key = string(rand.RandBytesMaskImprSrc(permit.KeyLength))
 			}
 
-			if !domainCheck.MatchString(args[0]) {
+			if !permit.ValidateDomain(args[0]) {
 				must(cmd, errors.New("invalid domain name format"))
 			}
 
 			p := permit.Permit{
-				Version: 1,
-				Expires: exp,
-				Issued:  time.Now().Truncate(time.Second),
-				Key:     key,
-				Domain:  args[0],
-				Valid:   true,
-				Attributes: map[string]int{
-					"system.enabled":                 1,
-					"system.max-users":               -1,
-					"system.max-organisations":       1,
-					"system.max-teams":               -1,
-					"messaging.enabled":              1,
-					"messaging.max-users":            -1,
-					"messaging.max-private-channels": -1,
-					"messaging.max-public-channels":  -1,
-					"messaging.max-messages":         -1,
-					"compose.enabled":                1,
-					"compose.max-namespaces":         -1,
-					"compose.max-users":              -1,
-					"compose.max-modules":            -1,
-					"compose.max-charts":             -1,
-					"compose.max-pages":              -1,
-					"compose.max-triggers":           -1,
-				},
+				Version:    1,
+				Expires:    exp,
+				Issued:     time.Now().Truncate(time.Second),
+				Key:        key,
+				Domain:     args[0],
+				Valid:      true,
+				Attributes: permit.DefaultAttributes,
 			}
 
 			p.Contact, _ = cmd.Flags().GetString("contact")

@@ -18,11 +18,30 @@
   revision = "525175b56e18aa4549190ed3a1a77c66925b9cef"
 
 [[projects]]
+  digest = "1:bb2130e54ac8ea3ff78312ca365ce3b8a23423ed362530551bdceaccfa4d8e77"
+  name = "github.com/dgrijalva/jwt-go"
+  packages = [
+    ".",
+    "request",
+  ]
+  pruneopts = "UT"
+  revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
+  version = "v3.2.0"
+
+[[projects]]
   digest = "1:36fe9527deed01d2a317617e59304eb2c4ce9f8a24115bcc5c2e37b3aee5bae4"
   name = "github.com/gin-contrib/sse"
   packages = ["."]
   pruneopts = "UT"
   revision = "22d885f9ecc78bf4ee5d72b937e4bbcdc58e8cae"
+
+[[projects]]
+  branch = "master"
+  digest = "1:d03fcabd2cbda31fb963fe3ea46d06b812bf874ef0982865bcfae4ff6dab0ae1"
+  name = "github.com/gin-gonic/contrib"
+  packages = ["jwt"]
+  pruneopts = "UT"
+  revision = "54ff787f7c73aec36275e1384c705389b1772ba9"
 
 [[projects]]
   digest = "1:d5083934eb25e45d17f72ffa86cae3814f4a9d6c073c4f16b64147169b245606"
@@ -169,7 +188,9 @@
   input-imports = [
     "github.com/SentimensRG/sigctx",
     "github.com/cnjack/throttle",
+    "github.com/gin-gonic/contrib/jwt",
     "github.com/gin-gonic/gin",
+    "github.com/gin-gonic/gin/json",
     "github.com/joho/godotenv/autoload",
     "github.com/pkg/errors",
     "github.com/spf13/cobra",

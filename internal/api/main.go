@@ -6,6 +6,7 @@ import (
 
 	"github.com/SentimensRG/sigctx"
 	"github.com/cnjack/throttle"
+	"github.com/gin-gonic/contrib/jwt"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
@@ -14,17 +15,32 @@ import (
 )
 
 type (
-	finder interface {
+	permitKeeper interface {
 		Get(key string) (*permit.Permit, error)
+		Create(p permit.Permit) error
+	}
+
+	jsonError struct {
+		Error string `json:"error"`
 	}
 )
 
 const maxRequestsPerHour = 60
 
-func Serve(storage finder) {
+func Serve(storage permitKeeper) {
+	var jwtSecret string
+	var g *gin.RouterGroup
 	log, err := setupLogger(env.GetBoolEnv("LOG_PRETTY"), "debug")
 	if err != nil {
 		panic("Unable to setup logging")
+	}
+
+	if storage == nil {
+		panic("Missing storage")
+	}
+
+	if jwtSecret = env.GetStringEnv("JWT_SECRET", ""); jwtSecret == "" {
+		panic("JWT_SECRET missing")
 	}
 
 	ctx := sigctx.New()
@@ -33,13 +49,22 @@ func Serve(storage finder) {
 	router := gin.New()
 
 	router.Use(requestLogMiddleware(log))
-	router.Use(throttle.Policy(&throttle.Quota{
+
+	g = router.Group("/key")
+	g.Use(jwt.Auth(jwtSecret))
+	g.POST("", endpointKeyCreate(storage))
+	// router.GET("/key/:key", endpointKeyRead(storage))
+
+	// Key check with throttling
+	g = router.Group("/check")
+	g.Use(throttle.Policy(&throttle.Quota{
 		Limit:  maxRequestsPerHour,
 		Within: time.Hour,
 	}))
+	g.POST("", endpointKeyCheck(storage))
 
-	router.POST("/check", endpointKeyCheck(storage))
-	router.GET("/", func(ctx *gin.Context) {
+	// Catch all path
+	router.Any("/", func(ctx *gin.Context) {
 		ctx.Header("Content-Type", "text/html; charset=utf-8")
 		ctx.String(
 			http.StatusOK,
@@ -70,5 +95,16 @@ func Serve(storage finder) {
 	select {
 	case <-ctx.Done():
 		break
+	}
+}
+
+func newJsonError(err interface{}) jsonError {
+	switch val := err.(type) {
+	case string:
+		return jsonError{val}
+	case error:
+		return jsonError{val.Error()}
+	default:
+		return jsonError{"unexpected error type"}
 	}
 }
